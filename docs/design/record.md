@@ -37,7 +37,9 @@ current image in the same slot:
 - `banner.image` against the profile's `banner` blob CID.
 
 Compare the CID strings exactly. If the profile has no image in that slot, or
-the CIDs differ, the description doesn't apply. A reader that only has a
+the CIDs differ, the description doesn't apply. Uploading the very same file
+again gives the same CID, so its description still applies, which is right:
+it's the same picture. A reader that only has a
 profile view can take the CID from the image URL when its host puts the CID
 in the URL; otherwise it fetches the profile record.
 
@@ -51,9 +53,14 @@ in the URL; otherwise it fetches the profile record.
 - **Keep what you don't change.** Editing the avatar's description keeps the
   banner's, and the other way round.
 - **Keep unknown properties.** A client that rewrites the record keeps
-  properties it doesn't know.
+  properties it doesn't know. Read the record first, and if that read fails
+  for any reason other than the record not existing, don't write.
+- **Don't overwrite a newer write.** Pass the read record's CID as
+  `swapRecord`, so a save from another client in between makes yours fail
+  instead of silently replacing it.
 - **Removing a description** means writing the record without that slot.
-  An `alt` is never empty; leave the slot out instead.
+  An `alt` is never empty; leave the slot out instead. Trim the text before
+  saving, and treat text that is only whitespace as no description.
 - **Stale slots are harmless.** A description of an old image is simply
   unused. A client may drop it the next time it writes the record.
 
@@ -92,12 +99,18 @@ After saving the profile, with the new avatar's blob ref in hand:
 ```typescript
 const existing = await agent.com.atproto.repo
   .getRecord({repo: userDid, collection: 'app.nearhorizon.actor.profileAlt', rkey: 'self'})
-  .catch(() => undefined)
+  .catch((err) => {
+    // Only "no record yet" means start fresh. On any other error, stop:
+    // writing anyway would drop the banner and unknown properties.
+    if (err?.error === 'RecordNotFound') return undefined
+    throw err
+  })
 
 await agent.com.atproto.repo.putRecord({
   repo: userDid,
   collection: 'app.nearhorizon.actor.profileAlt',
   rkey: 'self',
+  swapRecord: existing?.data.cid, // fail instead of overwriting a newer write
   record: {
     ...existing?.data.value, // keep the banner and unknown properties
     $type: 'app.nearhorizon.actor.profileAlt',

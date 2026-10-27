@@ -4,9 +4,12 @@
 
 Show a description only when it [matches](record.md#matching) the profile's
 current image in that slot. In every other case (no record, no slot, a
-different CID, the record not loaded yet) show the image as you would
-without this record. Never show a description that might be of another
-picture.
+different CID, a blank `alt`, the record not loaded yet) show the image as
+you would without this record. Never show a description that might be of
+another picture.
+
+A description is the account's own plain text, like its bio. Show it as
+text: don't render markup or turn it into links.
 
 ## Screen readers
 
