@@ -1,0 +1,52 @@
+{
+  "lexicon": 1,
+  "id": "app.nearhorizon.actor.profileAlt",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "Descriptions (alt text) of the account's profile avatar and banner. A description is shown only while its image is the profile's current one.",
+      "key": "literal:self",
+      "record": {
+        "type": "object",
+        "required": ["updatedAt"],
+        "properties": {
+          "avatar": {
+            "type": "ref",
+            "description": "Description of the profile avatar.",
+            "ref": "#imageAlt"
+          },
+          "banner": {
+            "type": "ref",
+            "description": "Description of the profile banner.",
+            "ref": "#imageAlt"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "datetime",
+            "description": "Set on every write."
+          }
+        }
+      }
+    },
+
+    "imageAlt": {
+      "type": "object",
+      "description": "A description of one image, tied to that image by its CID.",
+      "required": ["image", "alt"],
+      "properties": {
+        "image": {
+          "type": "string",
+          "format": "cid",
+          "description": "CID of the blob described. Clients show alt only when this equals the CID of the profile's current image in that slot."
+        },
+        "alt": {
+          "type": "string",
+          "description": "The description, in plain text.",
+          "minLength": 1,
+          "maxGraphemes": 2000,
+          "maxLength": 20000
+        }
+      }
+    }
+  }
+}
